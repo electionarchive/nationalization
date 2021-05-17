@@ -1,0 +1,113 @@
+---
+title: "Nationalization Example"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Nationalization Example}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Introduction and Purpose
+
+This package specifically utilizes data from the Constituency-Level Elections Archive ([CLEA](http://www.electiondataarchive.org./)) to create party nationalization datasets, which contain effective number of parties measures (ENP), as well as several measures of party nationalization. These measures exist for both Lower Chamber and Upper Chamber election results at three different levels of aggregation: the national level, the party level, and the constituency level. Moreover, Gini measures of inequality are included as well, which are utilized for various measures. This package contains the main function to create and populate these databases, as well as scripts for post-processing of these measures and comparison of said measures to existing measures on the archive.
+
+The following is a robust example of the usage of the nationalization package. More information is available [here](http://www.electiondataarchive.org./) on CLEA generally, or [here](http://www.electiondataarchive.org./party-nationalization-measures.php) about these measures of nationalization more-specifically.
+
+## Installing `nationalization`
+
+The package is housed on GitHub [here](https://github.com/simongamerpage/nationalization) and can easily be downloaded using the `devtools` package:
+```{r installing the package, eval = FALSE}
+install.packages("devtools")
+devtools::install_github("simongamerpage/nationalization",
+                         build_vignettes = TRUE)
+```
+
+Note that it is highly recommended to install all necessary dependencies if/when prompted during the installation process. While this package only depends on five packages, those packages have their own dependencies, which are necessary to be installed and up-to-date on the user's local machine. `R` may prompt the user to restart their session prior to installation, which is recommended; however, `R` does this for *every* package being downloaded or updated, thus opting to restart only once is acceptable.
+
+## Using Appropriate Data
+
+As noted, `nationalization()` requires data in CLEA format, where the most crucial variables for `nationalization()` to run successfully are included below. Users should ensure that these columns are present prior to running the script, even if they are empty and/or not relevant for output. For example, even if the user opts to use the default `pv1`/`pvs1` used for measures, having `cv1`/`cvs1` present and filled with `-990` is required because the script parses the correct columns to use.
+
+In short, ensure the following columns are present, at the very least, to ensure `nationalization()` runs correctly:
+```{r variables, echo = FALSE}
+# Variable list to print
+vars=c("id","ctr_n","ctr","yr","mn","tier","cst","cst_n","pty","pty_n","vv1","pv1","pvs1","cv1","cvs1","seat")
+print(vars)
+```
+
+## Using `nationalization`
+
+To use `nationalization::nationalization()`, only three arguments are absolutely necessary, which are listed and briefly explained below:
+
+* `dataSource`: where the CLEA data file exists on the user's local machine. For example, if my CLEA data is in my computer's **Downloads** folder on Windows, my argument may look like this: "C:/Users/pagesim/Downloads/CLEA_data.rdata". For Mac users, working directories are similar but often contain a tilde (~) as a shortcut (i.e.,  "~/Downloads/CLEA_data.rdata").
+  + For more information on working directories, use `?getwd()` to read about file paths and/or the nature of a working directory.
+
+* `dataFormat`: the type of file being used for the aforementioned CLEA data. Note that the following formats are acceptable, and must be specified with the period and data type in quotation marks: ".csv",".xlsx",".rdata", or ".dta". 
+  + On Windows, right click your CLEA file and select `Properties` if you are not aware what type of data file you have. On Mac, select a file and choose File > Get Info to see your data format.
+
+* `outputFolder`: where the user wants the output data files to be written and saved on their local machine. For example, if I had a folder on my Desktop where I wanted the output called "Output", my argument would look like the following on Windows: "C:/Users/pagesim/Desktop/output". On Mac, it may look like the following: "~/Desktop/output".
+  + Much like `dataSource`, see `?getwd` for help on working directories & their specification on your system.
+
+A number of other arguments are available for the advanced user, which do not need to be specified to run the script. The next section describes these optional arguments and their relevance in detail; moreover, using `?nationalization` in the console after loading the library, `library(nationalization)`, describes all the arguments briefly.
+
+
+Now, it is time to run! In this example, my data exists on my Desktop, in a folder titled "CLEA", which is in `.rdata` format, and I want the output in that same folder, where a sub-folder called "output" exists.
+```{r running nationalization, eval = FALSE}
+library(nationalization)
+nationalization(dataSource = "C:/Users/pagesim/Desktop/CLEA/CLEA_LC_R14.rdata",
+                dataFormat = ".rdata",
+                outputFolder = "C:/Users/pagesim/Desktop/CLEA/output/")
+```
+
+Output in the console should look similar to the following, where total computation time (in minutes) is included. Note that this output is for CLEA Release 14, which contains approx. 1.1 million rows of electoral data.
+```{r nat output, eval = FALSE}
+#> [1] ---------------------------------------------------
+#> [1] Initializing... Checking Packages & Data Existence
+#> [1] ---------------------------------------------------
+#> [1] Sucessfully created subset for Gini & party-level measures...
+#> [1] Sucessfully created subset for national-level ENP measures...
+#> [1] Sucessfully created subset for constituency-level measures...
+#> [1] Sucessfully created subset for national-level inflation/PSNS measures...
+#> [1] Sucessfully created subset for national-level local_E measures...
+#> [1] --------------------------------
+#> [1] Computing inequality measures...
+#> [1] --------------------------------
+#> [1] Gini inequality measures successfully computed! Moving to party-level...
+#> [1] ---------------------------------
+#> [1] Computing Party Level Dataset...
+#> [1] ---------------------------------
+#> [1] Party-level measures successfully computed! Moving to national-level...
+#> [1] ------------------------------------
+#> [1] Computing National Level Dataset...
+#> [1] ------------------------------------
+#> [1] National-level measures successfully computed! Moving to constituency-level...
+#> [1] ---------------------------------------
+#> [1] Computing Constituency Level Dataset...
+#> [1] ---------------------------------------
+#> [1] Constituency-level measures successfully computed!
+#> The entire computation took  2.650667 mins 
+#> [1] Done!
+```
+
+## Optional Arguments for the Advanced User
+
+A number of optional arguments with default parameters exist for the advanced user of the nationalization function. Their purpose and applicability are listed and described below in detail. Note that *none* of the following arguments need to be specified for the function to work as intended.
+
+* `inequalityType`: The user has the option to select from a number of different ways to compute measures of inequality. Although `"Gini"` is the default and highly recommended, the user can compute inequality measures with any of the following character strings. Note that measures on the CLEA Archive are computed using `"Gini"`.
+  + `"RS"`, `"Atkinson"`, `"Theil"`, `"Kolm"`, `"var"`, `"square.var"`, `"entropy"`
+  
+* `CandidateOrPartyBased`: The user has the option to proxy party vote totals and party vote shares for their candidate-based counterparts. In other words, the user can proxy `pv1`/`pvs1` with `cv1`/`cvs1`. Note that this is not recommended because these measures are comparing *parties at their core*. Nevertheless, using candidate-based measures is sometimes desirable because data structure and quality varies greatly. 
+  + **Users can only utilize the following strings for this argument**: `"party.based"` (default/recommended option), or `"candidate.based"`. Note that `"shares.based"`, where the user's data may only have vote shares, is in development because of its applicability to a great deal of presidential election data, but this is a future project.
+  
+* `filterSmallParties`: By default, the script *filters out* parties that do not achieve at least five percent of the vote share at the national level. We do this because computing measures of nationalization for all of these relatively small parties is not valuable for analysis; in other words, nationalization measures for those parties hold little to no value. However, this argument offers the user to maintain these parties and compute their respective measures. By indicating `filterSmallParties = FALSE`, these parties will be maintained.
+  + Note that the user technically can indicate `filterSmallParties = TRUE`, yet this is the default and highly-recommended, thus does not have to be specified.
+  
+
+
